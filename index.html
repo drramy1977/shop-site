@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>متجر الشنط</title>
+<style>
+ body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f5f5f5;color:#222}
+ header{background:#222;color:#fff;padding:16px;text-align:center;font-size:20px}
+ #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;padding:16px;max-width:1100px;margin:auto}
+ .card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+ .main{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:#eee}
+ .thumbs{display:flex;gap:4px;overflow-x:auto;padding:6px}
+ .thumbs img{width:48px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer;opacity:.7;flex:none}
+ .thumbs img.on{opacity:1;outline:2px solid #222}
+ .info{padding:10px 12px 14px}
+ .price{font-size:20px;font-weight:bold}
+ .code{color:#777;font-size:13px;margin:2px 0 10px}
+ .btns{display:flex;gap:8px}
+ .btns a{flex:1;text-align:center;padding:10px 0;border-radius:8px;color:#fff;text-decoration:none;font-size:14px}
+ .wa{background:#25d366}.tg{background:#229ed9}
+</style>
+</head>
+<body>
+<header>متجر الشنط</header>
+<div id="grid"></div>
+<script>
+// ====== عدّل السطرين دول بس ======
+const WHATSAPP = "+20104137674";  // رقم الواتساب بكود الدولة، من غير + ومن غير الصفر
+const TELEGRAM = "username";      // يوزر التلجرام من غير @
+// =================================
+
+fetch("products.json").then(r => r.json()).then(list => {
+  const grid = document.getElementById("grid");
+  list.forEach(p => {
+    const msg = encodeURIComponent(`مرحبا، عايز أطلب المنتج كود ${p.code} بسعر ${p.price} جنيه`);
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img class="main" src="${p.images[0]}" loading="lazy" alt="كود ${p.code}">
+      <div class="thumbs">${p.images.map((s, i) => `<img src="${s}" loading="lazy" class="${i == 0 ? "on" : ""}">`).join("")}</div>
+      <div class="info">
+        <div class="price">${p.price} جنيه</div>
+        <div class="code">كود ${p.code}</div>
+        <div class="btns">
+          <a class="wa" href="https://wa.me/${WHATSAPP}?text=${msg}" target="_blank">واتساب</a>
+          <a class="tg" href="https://t.me/${TELEGRAM}?text=${msg}" target="_blank">تلجرام</a>
+        </div>
+      </div>`;
+    const main = card.querySelector(".main");
+    const thumbs = card.querySelectorAll(".thumbs img");
+    thumbs.forEach(t => t.onclick = () => {
+      main.src = t.src;
+      thumbs.forEach(x => x.classList.remove("on"));
+      t.classList.add("on");
+    });
+    grid.appendChild(card);
+  });
+});
+</script>
+</body>
+</html>
