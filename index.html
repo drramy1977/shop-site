@@ -1,62 +1,395 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<header>سوق مصر</header>
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>سوق مصر</title>
 <style>
- body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f5f5f5;color:#222}
- header{background:#222;color:#fff;padding:16px;text-align:center;font-size:20px}
- #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;padding:16px;max-width:1100px;margin:auto}
- .card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.15)}
- .main{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;background:#eee}
- .thumbs{display:flex;gap:4px;overflow-x:auto;padding:6px}
- .thumbs img{width:48px;height:60px;object-fit:cover;border-radius:4px;cursor:pointer;opacity:.7;flex:none}
- .thumbs img.on{opacity:1;outline:2px solid #222}
- .info{padding:10px 12px 14px}
- .price{font-size:20px;font-weight:bold}
- .code{color:#777;font-size:13px;margin:2px 0 10px}
- .btns{display:flex;gap:8px}
- .btns a{flex:1;text-align:center;padding:10px 0;border-radius:8px;color:#fff;text-decoration:none;font-size:14px}
- .wa{background:#25d366}.tg{background:#229ed9}
+ /* ===== الألوان: 5 ثيمات جاهزة (rose / ocean / emerald / sunset / gold) ===== */
+ [data-theme="rose"]   {--accent:#e11d74;--accent2:#ff7a59;--bg:#fff5f8;--card:#fff;--ink:#2a1b24;--muted:#8a7480;--line:#f3d9e3;--soft:#ffe9f1;--on:#fff}
+ [data-theme="ocean"]  {--accent:#0b73d9;--accent2:#14c7c7;--bg:#f2f8ff;--card:#fff;--ink:#14263a;--muted:#6b7f95;--line:#d8e6f5;--soft:#e4f1ff;--on:#fff}
+ [data-theme="emerald"]{--accent:#0f9d58;--accent2:#8bc34a;--bg:#f3fbf6;--card:#fff;--ink:#14301f;--muted:#6a8575;--line:#d6ecde;--soft:#e2f5e9;--on:#fff}
+ [data-theme="sunset"] {--accent:#ff5e3a;--accent2:#ffb347;--bg:#fff7f1;--card:#fff;--ink:#35200f;--muted:#8f7560;--line:#f7e0cf;--soft:#ffeadb;--on:#fff}
+ [data-theme="gold"]   {--accent:#c9962b;--accent2:#f2d27a;--bg:#14110c;--card:#1f1b14;--ink:#f6ecd6;--muted:#a8997a;--line:#3a3220;--soft:#2a2418;--on:#1b1405}
+
+ :root{--hh:64px;--t:.3s}
+ *{box-sizing:border-box}
+ html{scroll-behavior:smooth}
+ body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+ a{-webkit-tap-highlight-color:transparent}
+ button{font-family:inherit}
+
+ @keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+ @keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+ @keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+ @keyframes shimmer{to{background-position:-200% 0}}
+ @keyframes float{50%{transform:translateY(14px)}}
+
+ /* ===== الهيدر + أيقونة القايمة ===== */
+ header{position:sticky;top:0;z-index:50;height:var(--hh);background:linear-gradient(90deg,var(--accent),var(--accent2));color:var(--on);display:flex;align-items:center;gap:12px;padding:0 14px;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+ header h1{margin:0;font-size:21px;flex:none}
+ header h1 a{color:inherit;text-decoration:none}
+ #here{margin-inline-start:auto;background:rgba(255,255,255,.2);padding:6px 14px;border-radius:99px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:48%}
+
+ #menuBtn{width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.2);cursor:pointer;position:relative;flex:none;transition:background var(--t)}
+ #menuBtn:hover{background:rgba(255,255,255,.35)}
+ #menuBtn span{position:absolute;right:11px;left:11px;height:3px;background:var(--on);border-radius:2px;transition:transform var(--t),opacity var(--t),top var(--t)}
+ #menuBtn span:nth-child(1){top:14px}
+ #menuBtn span:nth-child(2){top:21px}
+ #menuBtn span:nth-child(3){top:28px}
+ #menuBtn.open span:nth-child(1){top:21px;transform:rotate(45deg)}
+ #menuBtn.open span:nth-child(2){opacity:0}
+ #menuBtn.open span:nth-child(3){top:21px;transform:rotate(-45deg)}
+
+ /* ===== النافبار (بتتفتح من الأيقونة بترانزيشن 0.3 ثانية) ===== */
+ #overlay{position:fixed;top:var(--hh);left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:40;opacity:0;visibility:hidden;transition:opacity var(--t),visibility 0s linear var(--t)}
+ #overlay.open{opacity:1;visibility:visible;transition:opacity var(--t),visibility 0s}
+ #drawer{position:fixed;top:var(--hh);bottom:0;right:0;width:min(300px,86vw);background:var(--card);z-index:45;transform:translateX(100%);visibility:hidden;transition:transform var(--t) ease,visibility 0s linear var(--t);box-shadow:-6px 0 24px rgba(0,0,0,.3);overflow-y:auto;padding-bottom:20px}
+ #drawer.open{transform:none;visibility:visible;transition:transform var(--t) ease,visibility 0s}
+ .dhead{padding:18px 20px 8px;color:var(--muted);font-size:13px}
+ #nav a{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 20px;color:var(--ink);text-decoration:none;font-size:16px;border-right:4px solid transparent;opacity:0;transform:translateX(24px);transition:opacity var(--t) calc(var(--n,0)*35ms),transform var(--t) calc(var(--n,0)*35ms),background .2s}
+ #drawer.open #nav a{opacity:1;transform:none}
+ #nav a:hover{background:var(--soft)}
+ #nav a.on{background:var(--soft);border-right-color:var(--accent);color:var(--accent);font-weight:bold}
+ #nav small{color:var(--muted);font-size:11px;font-weight:normal}
+
+ main{max-width:1200px;margin:0 auto;padding:18px}
+ .page{animation:pageIn var(--t) ease}
+
+ /* ===== البانر ===== */
+ .hero{position:relative;overflow:hidden;border-radius:20px;padding:30px 22px;min-height:130px;margin-bottom:24px;color:var(--on);background:linear-gradient(120deg,var(--accent),var(--accent2))}
+ .hero>*{position:relative;z-index:1}
+ .hero::before,.hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.18);animation:float 7s ease-in-out infinite}
+ .hero::before{width:150px;height:150px;left:-30px;top:-45px}
+ .hero::after{width:90px;height:90px;left:110px;bottom:-35px;animation-delay:-3s}
+ .hero h2{margin:0 0 6px;font-size:27px}
+ .hero p{margin:0;opacity:.92;font-size:15px}
+
+ .sec-head{display:flex;align-items:center;margin-bottom:14px}
+ .sec-head h2{margin:0;font-size:19px}
+ .sec-head h2::before{content:"";display:inline-block;width:5px;height:20px;border-radius:3px;background:linear-gradient(var(--accent),var(--accent2));margin-left:9px;vertical-align:-3px}
+ .count{margin-inline-start:auto;color:var(--muted);font-size:13px}
+ .soon{background:var(--card);border:2px dashed var(--line);border-radius:16px;padding:30px 24px;text-align:center;color:var(--muted);font-size:17px}
+
+ /* ===== كارت المنتج: مكان للصورة + تايتل + سعر + نجوم ===== */
+ .mixgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+ .card{background:var(--card);border-radius:18px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.12);cursor:pointer;display:flex;flex-direction:column;transition:transform var(--t),box-shadow var(--t);animation:up .5s backwards;animation-delay:calc(var(--i,0)*55ms)}
+ .card:hover{transform:translateY(-5px);box-shadow:0 12px 24px rgba(0,0,0,.22)}
+ .card:hover img{transform:scale(1.07)}
+ .imgwrap{position:relative;overflow:hidden;background:var(--soft)}
+ .imgwrap img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;transition:transform .4s}
+ .badge{position:absolute;top:9px;right:9px;z-index:2;background:linear-gradient(90deg,var(--accent),var(--accent2));color:var(--on);font-size:11px;font-weight:bold;padding:3px 10px;border-radius:99px}
+ .tag{position:absolute;bottom:8px;right:8px;z-index:2;background:rgba(0,0,0,.58);color:#fff;font-size:11px;padding:3px 9px;border-radius:99px}
+ .card .body{padding:11px 13px 14px;display:flex;flex-direction:column;gap:3px;flex:1}
+ .ptitle{margin:0;font-size:15px;line-height:1.45;min-height:2.9em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .price{font-weight:bold;font-size:18px;color:var(--accent)}
+ .code{color:var(--muted);font-size:12px}
+
+ /* النجوم */
+ .stars{display:flex;align-items:center;gap:1px;margin-top:2px}
+ .star{background:none;border:0;padding:0 1px;font-size:23px;line-height:1;color:#bdbdbd;cursor:pointer;transition:transform .15s,color .2s}
+ .star.on{color:#f5b301}
+ .star:hover,.star:has(~ .star:hover){color:#f5b301}
+ .star:hover{transform:scale(1.25)}
+ .rtext{color:var(--muted);font-size:11px;margin-right:6px}
+
+ .btns{display:flex;gap:8px;margin-top:9px}
+ .btns a{flex:1;text-align:center;padding:11px 0;border-radius:10px;color:#fff;text-decoration:none;font-size:14px;font-weight:bold;transition:transform .15s,filter .15s}
+ .btns a:hover{filter:brightness(1.08)}
+ .btns a:active{transform:scale(.96)}
+ .wa{background:linear-gradient(135deg,#25d366,#128c7e)}
+ .tg{background:linear-gradient(135deg,#2aabee,#229ed9)}
+
+ #modal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;z-index:60;padding:12px}
+ #modal.open{display:flex}
+ .mbox{background:var(--card);color:var(--ink);border-radius:18px;max-width:460px;width:100%;max-height:95vh;overflow-y:auto;position:relative;animation:pop .22s}
+ #mclose{position:absolute;top:10px;left:10px;z-index:2;width:38px;height:38px;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:20px;cursor:pointer}
+ .mainimg{width:100%;aspect-ratio:4/5;object-fit:contain;background:#000;display:block}
+ .thumbs{display:flex;gap:5px;overflow-x:auto;padding:8px}
+ .thumbs img{width:54px;height:66px;object-fit:cover;border-radius:6px;cursor:pointer;opacity:.6;flex:none;transition:opacity .2s}
+ .thumbs img.on{opacity:1;outline:2px solid var(--accent)}
+ .minfo{padding:6px 16px 18px;display:flex;flex-direction:column;gap:3px}
+ .minfo h3{margin:0;font-size:18px}
+
+ /* ===== زرار الواتساب العايم (صغير) ===== */
+ #wafab{position:fixed;left:14px;bottom:14px;z-index:25;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#25d366,#128c7e);display:flex;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 3px 10px rgba(0,0,0,.3);transition:transform .25s,box-shadow .25s}
+ #wafab svg{width:26px;height:26px;fill:#fff}
+ #wafab:hover,#wafab:focus-visible,#wafab:active{transform:scale(1.12);box-shadow:0 0 0 5px rgba(37,211,102,.28),0 0 18px 6px rgba(37,211,102,.75),0 0 38px 12px rgba(37,211,102,.4)}
+ #wafab::after{content:"كلمنا على واتساب";position:absolute;left:56px;white-space:nowrap;background:#222;color:#fff;font-size:13px;padding:6px 12px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s}
+ #wafab:hover::after{opacity:1}
+
+ #demoNote{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:6px 14px;border-radius:99px;font-size:12px;z-index:24;opacity:.92;pointer-events:none;white-space:nowrap}
+
+ .skel{height:150px;border-radius:16px;margin-bottom:14px;background:linear-gradient(90deg,var(--soft) 25%,var(--card) 50%,var(--soft) 75%);background-size:200% 100%;animation:shimmer 1.2s infinite}
+
+ @media (max-width:800px){
+  main{padding:12px}
+  .hero{padding:24px 18px}
+  .hero h2{font-size:23px}
+  header h1{font-size:19px}
+  .mixgrid,.grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .card .body{padding:9px 10px 12px}
+  .star{font-size:20px}
+  .btns a{font-size:13px;padding:10px 0}
+  #wafab{width:42px;height:42px;left:12px;bottom:12px}
+  #wafab svg{width:24px;height:24px}
+ }
+ @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<header>متجر الشنط</header>
-<div id="grid"></div>
-<script>
-// ====== عدّل السطرين دول بس ======
-const WHATSAPP = "201004137674";
-const TELEGRAM = "souq_masr_shop"; // 
-// =================================
+<header>
+  <button id="menuBtn" aria-label="القائمة" aria-expanded="false" aria-controls="drawer"><span></span><span></span><span></span></button>
+  <h1><a href="#home" id="storeName"></a></h1>
+  <span id="here"></span>
+</header>
 
-fetch("products.json").then(r => r.json()).then(list => {
-  const grid = document.getElementById("grid");
-  list.forEach(p => {
-    const msg = encodeURIComponent(`مرحبا، عايز أطلب المنتج كود ${p.code} بسعر ${p.price} جنيه`);
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <img class="main" src="${p.images[0]}" loading="lazy" alt="كود ${p.code}">
-      <div class="thumbs">${p.images.map((s, i) => `<img src="${s}" loading="lazy" class="${i == 0 ? "on" : ""}">`).join("")}</div>
-      <div class="info">
-        <div class="price">${p.price} جنيه</div>
-        <div class="code">كود ${p.code}</div>
-        <div class="btns">
-          <a class="wa" href="https://wa.me/${WHATSAPP}?text=${msg}" target="_blank">واتساب</a>
-          <a class="tg" href="https://t.me/${TELEGRAM}?text=${msg}" target="_blank">تلجرام</a>
-        </div>
-      </div>`;
-    const main = card.querySelector(".main");
-    const thumbs = card.querySelectorAll(".thumbs img");
-    thumbs.forEach(t => t.onclick = () => {
-      main.src = t.src;
-      thumbs.forEach(x => x.classList.remove("on"));
-      t.classList.add("on");
-    });
-    grid.appendChild(card);
+<div id="overlay"></div>
+<aside id="drawer" aria-label="الأقسام">
+  <div class="dhead">تصفح الأقسام</div>
+  <nav id="nav"></nav>
+</aside>
+
+<main id="content"><div class="skel"></div><div class="skel"></div><div class="skel"></div></main>
+
+<a id="wafab" target="_blank" rel="noopener" aria-label="واتساب">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+</a>
+
+<div id="modal">
+  <div class="mbox">
+    <button id="mclose" aria-label="إغلاق">✕</button>
+    <div id="mbody"></div>
+  </div>
+</div>
+
+<script>
+// ============ الإعدادات (غيّر هنا بس) ============
+const STORE_NAME = "سوق مصر";
+const TAGLINE = "أحدث المنتجات بأحسن الأسعار، واطلب بضغطة واحدة";
+const WHATSAPP = "201004137674";   // رقم الواتساب بكود الدولة (01004137674 ← 201004137674)
+const TELEGRAM = "souq_masr_shop";
+const THEME_DEFAULT = "rose";      // rose / ocean / emerald / sunset / gold
+const HOME_COUNT = 24;             // عدد المنتجات المتلخبطة في الرئيسية
+const NEW_DAYS = 3;                // المنتج بيظهر عليه "جديد" لمدة كام يوم
+
+// الأقسام: لإضافة قسم جديد زوّد سطر هنا (id بالإنجليزي بدون مسافات)
+const CATEGORIES = [
+  {id: "shoes",     icon: "👟", name: "الأحذية"},
+  {id: "kids",      icon: "🧒", name: "ملابس أطفال"},
+  {id: "women",     icon: "👗", name: "ملابس حريمي"},
+  {id: "men",       icon: "👔", name: "ملابس رجالي"},
+  {id: "sport_men", icon: "🏃", name: "ملابس رياضية رجالي"},
+  {id: "homeware",  icon: "🏠", name: "أدوات منزلية"}
+];
+// ================================================
+
+const THEMES = ["rose", "ocean", "emerald", "sunset", "gold"];
+const qs = new URLSearchParams(location.search);
+const qTheme = qs.get("theme");   // للتجربة: ?theme=ocean
+document.documentElement.setAttribute("data-theme", THEMES.includes(qTheme) ? qTheme : THEME_DEFAULT);
+const DEMO = qs.get("demo") === "1";   // معاينة بمنتجات وهمية: ?demo=1
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let products = [];
+
+// التقييمات بتتحفظ على جهاز الزائر نفسه (localStorage)
+let ratings = {};
+try { ratings = JSON.parse(localStorage.getItem("shop_ratings") || "{}"); } catch (e) {}
+
+document.title = STORE_NAME;
+$("#storeName").textContent = STORE_NAME;
+$("#wafab").href = `https://wa.me/${WHATSAPP}`;
+
+const catOf = id => CATEGORIES.find(c => c.id === id);
+const byCat = id => products.filter(p => p.category === id);
+const titleOf = p => p.title || (catOf(p.category) ? catOf(p.category).name : "منتج");
+const isNew = p => { const d = new Date(p.date); return !isNaN(d) && (Date.now() - d) / 86400000 <= NEW_DAYS; };
+const badge = p => isNew(p) ? `<span class="badge">جديد</span>` : "";
+
+function shuffle(a) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+// منتجات من كل الأقسام بالتناوب، وبعدين تتلخبط
+function mixed() {
+  const lists = CATEGORIES.map(c => shuffle(byCat(c.id))).filter(l => l.length);
+  const out = [];
+  for (let i = 0; out.length < HOME_COUNT && lists.some(l => i < l.length); i++) {
+    lists.forEach(l => { if (i < l.length && out.length < HOME_COUNT) out.push(l[i]); });
+  }
+  return shuffle(out);
+}
+
+// ===== منتجات وهمية للمعاينة بس (بتظهر مع ?demo=1 فقط) =====
+const DEMO_TITLES = {
+  shoes: ["كوتشي رياضي خفيف", "حذاء كلاسيك جلد", "صندل صيفي مريح", "بوت شتوي"]
+};
+function demoProducts() {
+  const pal = [["#ff9a9e", "#fad0c4"], ["#a1c4fd", "#c2e9fb"], ["#fbc2eb", "#a6c1ee"], ["#84fab0", "#8fd3f4"]];
+  const out = [];
+  CATEGORIES.forEach(c => {
+    for (let n = 0; n < 4; n++) {
+      const [c1, c2] = pal[n % pal.length];
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="400" height="500" fill="url(#g)"/><text x="200" y="290" font-size="130" text-anchor="middle">${c.icon}</text></svg>`;
+      out.push({
+        code: `demo-${c.id}-${n + 1}`,
+        category: c.id,
+        title: (DEMO_TITLES[c.id] || [])[n] || `${c.name} - موديل ${n + 1}`,
+        price: 250 + n * 60,
+        images: ["data:image/svg+xml;utf8," + encodeURIComponent(svg)],
+        date: n === 0 ? new Date().toISOString() : "2020-01-01"
+      });
+    }
   });
+  return out;
+}
+
+function orderLinks(p) {
+  const msg = encodeURIComponent(`مرحبا، عايز أطلب المنتج "${titleOf(p)}" كود ${p.code} بسعر ${p.price} جنيه`);
+  return `<div class="btns">
+    <a class="wa" href="https://wa.me/${WHATSAPP}?text=${msg}" target="_blank" rel="noopener">واتساب</a>
+    <a class="tg" href="https://t.me/${TELEGRAM}?text=${msg}" target="_blank" rel="noopener">تلجرام</a>
+  </div>`;
+}
+
+function stars(code) {
+  const r = ratings[code] || 0;
+  return `<div class="stars" data-stars="${esc(code)}" aria-label="تقييم المنتج">` +
+    [1, 2, 3, 4, 5].map(v =>
+      `<button type="button" class="star${v <= r ? " on" : ""}" data-v="${v}" data-c="${esc(code)}" aria-label="${v} من 5">★</button>`
+    ).join("") +
+    `<small class="rtext">${r ? "تقييمك " + r + "/5" : "قيّم المنتج"}</small></div>`;
+}
+
+function rate(code, v) {
+  ratings[code] = v;
+  try { localStorage.setItem("shop_ratings", JSON.stringify(ratings)); } catch (e) {}
+  document.querySelectorAll(".stars").forEach(box => {
+    if (box.dataset.stars !== String(code)) return;
+    box.querySelectorAll(".star").forEach(s => s.classList.toggle("on", +s.dataset.v <= v));
+    box.querySelector(".rtext").textContent = "تقييمك " + v + "/5";
+  });
+}
+
+// كارت المنتج: صورة + تايتل + سعر + نجوم (+ أزرار الطلب في صفحة القسم)
+function card(p, i, full) {
+  const c = catOf(p.category);
+  return `<article class="card" data-code="${esc(p.code)}" style="--i:${Math.min(i, 10)}">
+    <div class="imgwrap">${badge(p)}${full ? "" : `<span class="tag">${c ? c.icon + " " + esc(c.name) : ""}</span>`}<img src="${esc(p.images[0])}" loading="lazy" alt="${esc(titleOf(p))}"></div>
+    <div class="body">
+      <h3 class="ptitle">${esc(titleOf(p))}</h3>
+      <div class="price">${esc(p.price)} جنيه</div>
+      <div class="code">كود ${esc(p.code)}</div>
+      ${stars(p.code)}
+      ${full ? orderLinks(p) : ""}
+    </div>
+  </article>`;
+}
+
+function renderNav(current) {
+  const items = [{href: "#home", id: "main", label: "🏠 الرئيسية", empty: false}].concat(
+    CATEGORIES.map(c => ({href: "#cat=" + c.id, id: c.id, label: c.icon + " " + esc(c.name), empty: !byCat(c.id).length}))
+  );
+  $("#nav").innerHTML = items.map((it, n) =>
+    `<a href="${it.href}" style="--n:${n}" class="${current === it.id ? "on" : ""}"><span>${it.label}</span>${it.empty ? "<small>قريبا</small>" : ""}</a>`
+  ).join("");
+}
+
+function renderHome() {
+  document.title = STORE_NAME;
+  $("#here").textContent = "الرئيسية";
+  const list = mixed();
+  $("#content").innerHTML = `<div class="page">
+    <div class="hero"><h2>${esc(STORE_NAME)}</h2><p>${esc(TAGLINE)}</p></div>
+    <div class="sec-head"><h2>🛍️ اخترنالك من كل قسم</h2></div>
+    ${list.length ? `<div class="mixgrid">${list.map((p, i) => card(p, i, false)).join("")}</div>` : `<div class="soon">المنتجات قريبا ✨</div>`}
+  </div>`;
+}
+
+function renderCat(c) {
+  document.title = c.name + " | " + STORE_NAME;
+  $("#here").textContent = c.icon + " " + c.name;
+  const list = byCat(c.id);
+  $("#content").innerHTML = `<div class="page">
+    <div class="sec-head"><h2>${c.icon} ${esc(c.name)}</h2>${list.length ? `<span class="count">${list.length} منتج</span>` : ""}</div>
+    ${list.length ? `<div class="grid">${list.map((p, i) => card(p, i, true)).join("")}</div>` : `<div class="soon">قريبا ✨</div>`}
+  </div>`;
+}
+
+function openModal(code) {
+  const p = products.find(x => String(x.code) === code);
+  if (!p) return;
+  $("#mbody").innerHTML =
+    `<img class="mainimg" id="mainimg" src="${esc(p.images[0])}" alt="">
+     <div class="thumbs">${p.images.map((s, i) => `<img src="${esc(s)}" class="${i === 0 ? "on" : ""}" alt="">`).join("")}</div>
+     <div class="minfo"><h3>${esc(titleOf(p))}</h3><div class="price">${esc(p.price)} جنيه</div><div class="code">كود ${esc(p.code)}</div>${stars(p.code)}${orderLinks(p)}</div>`;
+  const main = $("#mainimg");
+  const thumbs = $("#mbody").querySelectorAll(".thumbs img");
+  thumbs.forEach(t => t.onclick = () => {
+    main.src = t.src;
+    thumbs.forEach(x => x.classList.remove("on"));
+    t.classList.add("on");
+  });
+  $("#modal").classList.add("open");
+}
+function closeModal() { $("#modal").classList.remove("open"); }
+$("#mclose").onclick = closeModal;
+$("#modal").onclick = e => { if (e.target.id === "modal") closeModal(); };
+
+// فتح المنتج بالضغط على الكارت (غير النجوم وأزرار الطلب)
+$("#content").addEventListener("click", e => {
+  if (e.target.closest(".star") || e.target.closest(".btns")) return;
+  const el = e.target.closest("[data-code]");
+  if (el) openModal(el.dataset.code);
 });
+// تقييم بالنجوم (في الكروت وفي نافذة المنتج)
+document.addEventListener("click", e => {
+  const s = e.target.closest(".star");
+  if (s) rate(s.dataset.c, +s.dataset.v);
+});
+
+// قايمة الأقسام بتتفتح من الأيقونة
+function setMenu(open) {
+  $("#drawer").classList.toggle("open", open);
+  $("#overlay").classList.toggle("open", open);
+  $("#menuBtn").classList.toggle("open", open);
+  $("#menuBtn").setAttribute("aria-expanded", open);
+}
+$("#menuBtn").onclick = () => setMenu(!$("#drawer").classList.contains("open"));
+$("#overlay").onclick = () => setMenu(false);
+$("#nav").addEventListener("click", e => { if (e.target.closest("a")) setMenu(false); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closeModal(); setMenu(false); } });
+
+// كل قسم صفحة لوحدها بلينك خاص: #cat=sport_men
+function route() {
+  const m = location.hash.match(/^#cat=(.+)$/);
+  const id = m ? decodeURIComponent(m[1]) : "";
+  const cat = catOf(id);
+  renderNav(cat ? cat.id : "main");
+  if (cat) renderCat(cat); else renderHome();
+  closeModal();
+  setMenu(false);
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", route);
+
+if (DEMO) document.body.insertAdjacentHTML("beforeend", `<div id="demoNote">معاينة تجريبية: منتجات وهمية</div>`);
+
+fetch("products.json?v=" + Date.now())
+  .then(r => r.json())
+  .catch(() => [])
+  .then(list => {
+    products = list.filter(p => !p.hidden && p.images && p.images.length);
+    if (DEMO) products = products.concat(demoProducts());
+    route();
+  });
 </script>
 </body>
 </html>
